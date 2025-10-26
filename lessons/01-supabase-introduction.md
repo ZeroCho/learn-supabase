@@ -1,6 +1,7 @@
 # 섹션 1: Supabase 입문
 
 ## 목표
+
 Supabase 기본 개념을 이해하고 TypeScript + Node.js 환경에서 Supabase 클라이언트를 설정합니다.
 
 ## 학습 내용
@@ -10,6 +11,7 @@ Supabase 기본 개념을 이해하고 TypeScript + Node.js 환경에서 Supabas
 Supabase는 Firebase의 오픈소스 대안으로, PostgreSQL 데이터베이스를 기반으로 하는 Backend as a Service (BaaS) 플랫폼입니다.
 
 **주요 특징:**
+
 - PostgreSQL 기반의 강력한 데이터베이스
 - 실시간 구독 기능
 - 인증 시스템
@@ -46,6 +48,7 @@ Supabase는 Firebase의 오픈소스 대안으로, PostgreSQL 데이터베이스
 - **service_role key**: 서버에서만 사용 (모든 권한)
 
 ⚠️ **보안 주의사항:**
+
 - `service_role` 키는 절대 클라이언트에 노출하지 마세요
 - `anon` 키만 클라이언트 코드에 포함
 
@@ -128,14 +131,14 @@ mkdir src/examples
 `src/lib/supabase.ts` 파일 생성:
 
 ```typescript
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from "@supabase/supabase-js";
 
 // 환경 변수에서 값 가져오기
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Supabase URL과 Anon Key가 필요합니다.');
+  throw new Error("Supabase URL과 Anon Key가 필요합니다.");
 }
 
 // Supabase 클라이언트 생성
@@ -169,27 +172,24 @@ dist
 환경 변수 로드 (`src/index.ts`):
 
 ```typescript
-import dotenv from 'dotenv';
+import dotenv from "dotenv";
 
 // .env 파일 로드
 dotenv.config();
 
-import { supabase } from './lib/supabase';
+import { supabase } from "./lib/supabase";
 
 async function main() {
-  console.log('Supabase 클라이언트가 성공적으로 초기화되었습니다!');
-  console.log('URL:', process.env.SUPABASE_URL);
-  
+  console.log("Supabase 클라이언트가 성공적으로 초기화되었습니다!");
+  console.log("URL:", process.env.SUPABASE_URL);
+
   // 간단한 연결 테스트
-  const { data, error } = await supabase
-    .from('test')
-    .select('*')
-    .limit(1);
-  
+  const { data, error } = await supabase.from("test").select("*").limit(1);
+
   if (error) {
-    console.log('연결 테스트 완료 (테이블이 없어도 괜찮습니다)');
+    console.log("연결 테스트 완료 (테이블이 없어도 괜찮습니다)");
   } else {
-    console.log('데이터:', data);
+    console.log("데이터:", data);
   }
 }
 
@@ -201,37 +201,41 @@ main().catch(console.error);
 `src/examples/01-connection-test.ts`:
 
 ```typescript
-import dotenv from 'dotenv';
+import dotenv from "dotenv";
 dotenv.config();
 
-import { supabase } from '../lib/supabase';
+import { supabase } from "../lib/supabase";
 
 async function testConnection() {
   try {
     // 클라이언트 정보 출력
-    console.log('=== Supabase 연결 테스트 ===\n');
-    console.log('URL:', supabase.supabaseUrl);
-    console.log('Key 사용 중:', supabase.supabaseKey.substring(0, 20) + '...\n');
-    
+    console.log("=== Supabase 연결 테스트 ===\n");
+    console.log("URL:", supabase.supabaseUrl);
+    console.log(
+      "Key 사용 중:",
+      supabase.supabaseKey.substring(0, 20) + "...\n"
+    );
+
     // 서버 정보 가져오기
     const { data, error } = await supabase
-      .from('_realtime')
-      .select('*')
+      .from("_realtime")
+      .select("*")
       .limit(1);
-    
-    if (error && error.code !== 'PGRST116') {
-      console.error('연결 오류:', error.message);
+
+    if (error && error.code !== "PGRST116") {
+      console.error("연결 오류:", error.message);
       return;
     }
-    
-    console.log('✅ Supabase에 성공적으로 연결되었습니다!');
-    
+
+    console.log("✅ Supabase에 성공적으로 연결되었습니다!");
+
     // 현재 사용자 정보 (로그인하지 않았으면 null)
-    const { data: { session } } = await supabase.auth.getSession();
-    console.log('세션:', session ? '활성화됨' : '비활성화됨');
-    
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    console.log("세션:", session ? "활성화됨" : "비활성화됨");
   } catch (error) {
-    console.error('예상치 못한 오류:', error);
+    console.error("예상치 못한 오류:", error);
   }
 }
 
@@ -273,6 +277,7 @@ learn-supabase-course/
 ## 다음 섹션 미리보기
 
 다음 섹션에서는 Supabase Database를 다루는 방법을 학습합니다:
+
 - Row Level Security (RLS)
 - CRUD 작업
 - TypeScript 타입 생성

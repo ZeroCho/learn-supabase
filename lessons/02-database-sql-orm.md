@@ -1,6 +1,7 @@
 # 섹션 2: Database - SQL & ORM
 
 ## 목표
+
 Supabase Database를 TypeScript로 다루고, Row Level Security와 PostgreSQL 함수를 활용하는 방법을 학습합니다.
 
 ## 학습 내용
@@ -10,11 +11,13 @@ Supabase Database를 TypeScript로 다루고, Row Level Security와 PostgreSQL �
 Row Level Security는 PostgreSQL의 보안 기능으로, 각 행(row)에 대한 접근을 제어합니다.
 
 **RLS의 필요성:**
+
 - 각 사용자는 자신의 데이터만 볼 수 있어야 함
 - 관리자는 모든 데이터에 접근 가능
 - 공개 데이터는 누구나 읽을 수 있음
 
 **RLS 활성화:**
+
 ```sql
 -- RLS 활성화
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
@@ -34,6 +37,7 @@ USING (auth.uid() = user_id);
 Supabase에서는 PostgreSQL 함수를 API 엔드포인트로 자동 노출합니다.
 
 **장점:**
+
 - 서버 로직을 데이터베이스에 배치
 - 네트워크 호출 감소
 - 트랜잭션 보장
@@ -43,11 +47,13 @@ Supabase에서는 PostgreSQL 함수를 API 엔드포인트로 자동 노출합�
 Supabase CLI를 사용하여 데이터베이스 스키마에서 TypeScript 타입을 자동 생성합니다.
 
 **Supabase CLI 설치:**
+
 ```bash
 npm install -g supabase
 ```
 
 **타입 생성:**
+
 ```bash
 supabase gen types typescript --project-id your-project-id > src/types/database.ts
 ```
@@ -55,16 +61,19 @@ supabase gen types typescript --project-id your-project-id > src/types/database.
 ### 4. Supabase CLI 사용
 
 **로그인:**
+
 ```bash
 supabase login
 ```
 
 **프로젝트 링크:**
+
 ```bash
 supabase link --project-ref your-project-ref
 ```
 
 **마이그레이션:**
+
 ```bash
 supabase db push
 ```
@@ -74,11 +83,12 @@ supabase db push
 Supabase는 Query Builder 패턴을 사용하여 타입 안전한 쿼리를 작성합니다.
 
 **기본 구조:**
+
 ```typescript
 const { data, error } = await supabase
-  .from('table_name')
-  .select('column1, column2')
-  .eq('column3', 'value')
+  .from("table_name")
+  .select("column1, column2")
+  .eq("column3", "value")
   .limit(10);
 ```
 
@@ -177,76 +187,76 @@ EXECUTE FUNCTION update_updated_at_column();
 `src/examples/02-crud-operations.ts`:
 
 ```typescript
-import dotenv from 'dotenv';
+import dotenv from "dotenv";
 dotenv.config();
 
-import { supabase } from '../lib/supabase';
+import { supabase } from "../lib/supabase";
 
 async function crudOperations() {
-  console.log('=== CRUD 작업 예제 ===\n');
+  console.log("=== CRUD 작업 예제 ===\n");
 
   // 1. CREATE - 데이터 삽입
-  console.log('1. CREATE 작업');
+  console.log("1. CREATE 작업");
   const { data: insertedTodo, error: insertError } = await supabase
-    .from('todos')
+    .from("todos")
     .insert({
-      title: 'Supabase 학습하기',
-      description: 'TypeScript로 Supabase 다루기',
-      completed: false
+      title: "Supabase 학습하기",
+      description: "TypeScript로 Supabase 다루기",
+      completed: false,
     })
     .select()
     .single();
 
   if (insertError) {
-    console.error('삽입 오류:', insertError.message);
-    console.log('💡 로그인이 필요할 수 있습니다.\n');
+    console.error("삽입 오류:", insertError.message);
+    console.log("💡 로그인이 필요할 수 있습니다.\n");
   } else {
-    console.log('✅ 생성된 TODO:', insertedTodo);
+    console.log("✅ 생성된 TODO:", insertedTodo);
   }
 
   // 2. READ - 데이터 조회
-  console.log('\n2. READ 작업');
+  console.log("\n2. READ 작업");
   const { data: todos, error: readError } = await supabase
-    .from('todos')
-    .select('*')
-    .order('created_at', { ascending: false })
+    .from("todos")
+    .select("*")
+    .order("created_at", { ascending: false })
     .limit(5);
 
   if (readError) {
-    console.error('조회 오류:', readError.message);
+    console.error("조회 오류:", readError.message);
   } else {
-    console.log('✅ TODO 목록:', todos);
+    console.log("✅ TODO 목록:", todos);
   }
 
   // 3. UPDATE - 데이터 업데이트
-  console.log('\n3. UPDATE 작업');
+  console.log("\n3. UPDATE 작업");
   if (insertedTodo) {
     const { data: updatedTodo, error: updateError } = await supabase
-      .from('todos')
+      .from("todos")
       .update({ completed: true })
-      .eq('id', insertedTodo.id)
+      .eq("id", insertedTodo.id)
       .select()
       .single();
 
     if (updateError) {
-      console.error('업데이트 오류:', updateError.message);
+      console.error("업데이트 오류:", updateError.message);
     } else {
-      console.log('✅ 업데이트된 TODO:', updatedTodo);
+      console.log("✅ 업데이트된 TODO:", updatedTodo);
     }
   }
 
   // 4. DELETE - 데이터 삭제
-  console.log('\n4. DELETE 작업');
+  console.log("\n4. DELETE 작업");
   if (insertedTodo) {
     const { error: deleteError } = await supabase
-      .from('todos')
+      .from("todos")
       .delete()
-      .eq('id', insertedTodo.id);
+      .eq("id", insertedTodo.id);
 
     if (deleteError) {
-      console.error('삭제 오류:', deleteError.message);
+      console.error("삭제 오류:", deleteError.message);
     } else {
-      console.log('✅ TODO 삭제 완료');
+      console.log("✅ TODO 삭제 완료");
     }
   }
 }
@@ -259,38 +269,40 @@ crudOperations().catch(console.error);
 `src/examples/03-join-queries.ts`:
 
 ```typescript
-import dotenv from 'dotenv';
+import dotenv from "dotenv";
 dotenv.config();
 
-import { supabase } from '../lib/supabase';
+import { supabase } from "../lib/supabase";
 
 async function joinQueries() {
-  console.log('=== JOIN 쿼리 예제 ===\n');
+  console.log("=== JOIN 쿼리 예제 ===\n");
 
   // 사용자의 TODO와 프로필 정보를 함께 가져오기
   const { data, error } = await supabase
-    .from('todos')
-    .select(`
+    .from("todos")
+    .select(
+      `
       *,
       profiles!todos_user_id_fkey (
         username,
         full_name
       )
-    `)
-    .order('created_at', { ascending: false })
+    `
+    )
+    .order("created_at", { ascending: false })
     .limit(10);
 
   if (error) {
-    console.error('오류:', error.message);
+    console.error("오류:", error.message);
     return;
   }
 
-  console.log('✅ TODO 목록 (프로필 정보 포함):');
+  console.log("✅ TODO 목록 (프로필 정보 포함):");
   data?.forEach((todo: any) => {
     console.log(`
       - 제목: ${todo.title}
       - 작성자: ${todo.profiles?.full_name || todo.profiles?.username}
-      - 완료 여부: ${todo.completed ? '✅' : '⏳'}
+      - 완료 여부: ${todo.completed ? "✅" : "⏳"}
       - 생성일: ${new Date(todo.created_at).toLocaleString()}
     `);
   });
@@ -304,17 +316,17 @@ joinQueries().catch(console.error);
 `src/examples/04-transactions.ts`:
 
 ```typescript
-import dotenv from 'dotenv';
+import dotenv from "dotenv";
 dotenv.config();
 
-import { supabase } from '../lib/supabase';
+import { supabase } from "../lib/supabase";
 
 async function transactions() {
-  console.log('=== 트랜잭션 예제 ===\n');
+  console.log("=== 트랜잭션 예제 ===\n");
 
   // PostgreSQL RPC 함수를 사용한 트랜잭션
   // 먼저 데이터베이스에 함수를 생성해야 합니다:
-  
+
   /*
   CREATE OR REPLACE FUNCTION create_todo_with_tag(
     todo_title TEXT,
@@ -339,17 +351,17 @@ async function transactions() {
   */
 
   // RPC 호출
-  const { data, error } = await supabase.rpc('create_todo_with_tag', {
-    todo_title: '새 TODO',
-    todo_description: '설명',
-    tag_name: '중요'
+  const { data, error } = await supabase.rpc("create_todo_with_tag", {
+    todo_title: "새 TODO",
+    todo_description: "설명",
+    tag_name: "중요",
   });
 
   if (error) {
-    console.error('트랜잭션 오류:', error.message);
-    console.log('💡 함수가 데이터베이스에 생성되지 않았을 수 있습니다.');
+    console.error("트랜잭션 오류:", error.message);
+    console.log("💡 함수가 데이터베이스에 생성되지 않았을 수 있습니다.");
   } else {
-    console.log('✅ 트랜잭션 성공:', data);
+    console.log("✅ 트랜잭션 성공:", data);
   }
 }
 
@@ -367,68 +379,68 @@ export type Json =
   | boolean
   | null
   | { [key: string]: Json | undefined }
-  | Json[]
+  | Json[];
 
 export interface Database {
   public: {
     Tables: {
       profiles: {
         Row: {
-          id: string
-          username: string
-          full_name: string | null
-          avatar_url: string | null
-          created_at: string
-          updated_at: string
-        }
+          id: string;
+          username: string;
+          full_name: string | null;
+          avatar_url: string | null;
+          created_at: string;
+          updated_at: string;
+        };
         Insert: {
-          id: string
-          username: string
-          full_name?: string | null
-          avatar_url?: string | null
-          created_at?: string
-          updated_at?: string
-        }
+          id: string;
+          username: string;
+          full_name?: string | null;
+          avatar_url?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
         Update: {
-          id?: string
-          username?: string
-          full_name?: string | null
-          avatar_url?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-      }
+          id?: string;
+          username?: string;
+          full_name?: string | null;
+          avatar_url?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
       todos: {
         Row: {
-          id: string
-          user_id: string
-          title: string
-          description: string | null
-          completed: boolean
-          created_at: string
-          updated_at: string
-        }
+          id: string;
+          user_id: string;
+          title: string;
+          description: string | null;
+          completed: boolean;
+          created_at: string;
+          updated_at: string;
+        };
         Insert: {
-          id?: string
-          user_id: string
-          title: string
-          description?: string | null
-          completed?: boolean
-          created_at?: string
-          updated_at?: string
-        }
+          id?: string;
+          user_id: string;
+          title: string;
+          description?: string | null;
+          completed?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
         Update: {
-          id?: string
-          user_id?: string
-          title?: string
-          description?: string | null
-          completed?: boolean
-          created_at?: string
-          updated_at?: string
-        }
-      }
-    }
-  }
+          id?: string;
+          user_id?: string;
+          title?: string;
+          description?: string | null;
+          completed?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+    };
+  };
 }
 ```
 
@@ -437,8 +449,8 @@ export interface Database {
 `src/lib/supabase.ts`:
 
 ```typescript
-import { createClient } from '@supabase/supabase-js';
-import { Database } from '../types/database';
+import { createClient } from "@supabase/supabase-js";
+import { Database } from "../types/database";
 
 const supabaseUrl = process.env.SUPABASE_URL!;
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY!;
@@ -459,6 +471,7 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 ## 다음 섹션 미리보기
 
 다음 섹션에서는 Supabase Authentication을 다루는 방법을 학습합니다:
+
 - Email/Password 인증
 - OAuth 공급자 연동
 - Magic Link 인증
