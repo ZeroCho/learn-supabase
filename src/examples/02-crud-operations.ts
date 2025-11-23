@@ -14,13 +14,14 @@ async function crudOperations() {
       title: "Supabase 학습하기",
       description: "TypeScript로 Supabase 다루기",
       completed: false,
+      user_id: "USER_ID_PLACEHOLDER" // 실제 실행 시 유효한 UUID로 교체 필요
     })
     .select()
     .single();
 
   if (insertError) {
     console.error("삽입 오류:", insertError.message);
-    console.log("💡 로그인이 필요할 수 있습니다.\n");
+    console.log("💡 로그인이 필요하거나 RLS 정책을 확인하세요.\n");
   } else {
     console.log("✅ 생성된 TODO:", insertedTodo);
   }

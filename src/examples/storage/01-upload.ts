@@ -2,27 +2,35 @@ import dotenv from "dotenv";
 dotenv.config();
 import { supabase } from "../../lib/supabase";
 import * as fs from "fs";
+import * as path from "path";
 
 async function uploadFile() {
   console.log("=== 파일 업로드 ===\n");
 
   const bucketName = "avatars";
-  
-  // 테스트를 위한 더미 파일 데이터 생성
-  const fileName = `user-${Date.now()}.txt`;
-  const fileContent = "This is a test file for Supabase Storage";
+  // 테스트용 이미지 파일이 필요합니다.
+  const filePath = "./test-image.jpg";
+
+  if (!fs.existsSync(filePath)) {
+    console.error("테스트용 이미지 파일이 없습니다:", filePath);
+    console.log("임시 파일을 생성합니다...");
+    fs.writeFileSync(filePath, "dummy image content");
+  }
+
+  // 파일 읽기
+  const file = fs.readFileSync(filePath);
+  const fileName = `user-${Date.now()}.jpg`;
 
   // 업로드
   const { data, error } = await supabase.storage
     .from(bucketName)
-    .upload(fileName, fileContent, {
-      contentType: "text/plain",
+    .upload(fileName, file, {
+      contentType: "image/jpeg",
       upsert: false,
     });
 
   if (error) {
     console.error("업로드 오류:", error.message);
-    console.log("💡 버킷이 생성되지 않았거나 권한이 없을 수 있습니다.");
     return;
   }
 

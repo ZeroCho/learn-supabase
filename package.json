@@ -9,7 +9,11 @@
     "start": "node dist/index.js",
     "test:connection": "ts-node src/examples/01-connection-test.ts"
   },
-  "keywords": ["supabase", "typescript", "nodejs"],
+  "keywords": [
+    "supabase",
+    "typescript",
+    "nodejs"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {

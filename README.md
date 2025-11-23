@@ -5,19 +5,23 @@
 ## 📚 강의 구성
 
 ### 섹션 1: Supabase 입문
+
 - Supabase 클라이언트 초기화
 - 연결 테스트
 
 ### 섹션 2: Database - SQL & ORM
+
 - CRUD 작업
 - Row Level Security (RLS)
 - PostgreSQL 함수
 
 ### 섹션 3: Authentication - 인증 시스템
+
 - Email/Password 인증
 - OAuth 소셜 로그인
 
 ### 섹션 4: Storage - 파일 관리
+
 - 파일 업로드/다운로드
 - 이미지 변환
 

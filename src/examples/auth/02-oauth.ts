@@ -28,8 +28,8 @@ async function oauthLogin() {
   console.log("\n💡 이 URL을 브라우저에서 열어 로그인하세요.");
 }
 
-// 콜백 처리 예제
-async function handleOAuthCallback() {
+// 콜백 처리 예제 (실제로는 웹 서버 라우트에서 처리됨)
+async function handleOAuthCallback(url: string) {
   const { data, error } = await supabase.auth.getSession();
 
   if (error) {
