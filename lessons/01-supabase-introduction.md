@@ -160,9 +160,9 @@ npm install -D dotenv
 ### 실습 1: Node.js 프로젝트 생성
 
 ```bash
-# 1. 프로젝트 디렉토리 생성
-mkdir learn-supabase-course
-cd learn-supabase-course
+# 1. 프로젝트 디렉토리 생성 또는 GitHub learn-supabase 프로젝트 클론
+mkdir learn-supabase
+cd learn-supabase
 
 # 2. npm 초기화
 npm init -y
@@ -219,33 +219,6 @@ node_modules
 dist
 ```
 
-환경 변수 로드 (`src/index.ts`):
-
-```typescript
-import dotenv from "dotenv";
-
-// .env 파일 로드
-dotenv.config();
-
-import { supabase } from "./lib/supabase";
-
-async function main() {
-  console.log("Supabase 클라이언트가 성공적으로 초기화되었습니다!");
-  console.log("URL:", process.env.SUPABASE_URL);
-
-  // 간단한 연결 테스트
-  const { data, error } = await supabase.from("test").select("*").limit(1);
-
-  if (error) {
-    console.log("연결 테스트 완료 (테이블이 없어도 괜찮습니다)");
-  } else {
-    console.log("데이터:", data);
-  }
-}
-
-main().catch(console.error);
-```
-
 ### 실습 4: 첫 번째 연결 테스트
 
 `src/examples/01-connection-test.ts`:
@@ -296,6 +269,9 @@ testConnection();
 
 ```bash
 npm run dev src/examples/01-connection-test.ts
+# 또는
+npx tsc
+node --env-file .env dist/examples/01-connection-test.ts
 ```
 
 ## 예제 코드 구조
