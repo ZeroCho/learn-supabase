@@ -170,7 +170,7 @@ Supabase 대시보드에서 다음 SQL 실행:
 ```sql
 -- 프로필 테이블
 CREATE TABLE profiles (
-  id UUID PRIMARY KEY REFERENCES auth.users(id),
+  user_id UUID PRIMARY KEY REFERENCES auth.users(id),
   username TEXT UNIQUE NOT NULL,
   full_name TEXT,
   avatar_url TEXT,
@@ -184,21 +184,21 @@ ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 -- 정책: 사용자는 자신의 프로필을 볼 수 있음
 CREATE POLICY "Users can view own profile"
 ON profiles FOR SELECT
-USING (auth.uid() = id);
+USING (auth.uid() = user_id);
 
 -- 정책: 사용자는 자신의 프로필을 업데이트할 수 있음
 CREATE POLICY "Users can update own profile"
 ON profiles FOR UPDATE
-USING (auth.uid() = id);
+USING (auth.uid() = user_id);
 
 -- 정책: 사용자는 자신의 프로필을 삽입할 수 있음
 CREATE POLICY "Users can insert own profile"
 ON profiles FOR INSERT
-WITH CHECK (auth.uid() = id);
+WITH CHECK (auth.uid() = user_id);
 
 -- TODO 테이블
 CREATE TABLE todos (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  todo_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES auth.users(id) NOT NULL,
   title TEXT NOT NULL,
   description TEXT,
@@ -256,9 +256,6 @@ EXECUTE FUNCTION update_updated_at_column();
 `src/examples/02-crud-operations.ts`:
 
 ```typescript
-import dotenv from "dotenv";
-dotenv.config();
-
 import { supabase } from "../lib/supabase";
 
 async function crudOperations() {
@@ -338,9 +335,6 @@ crudOperations().catch(console.error);
 `src/examples/03-join-queries.ts`:
 
 ```typescript
-import dotenv from "dotenv";
-dotenv.config();
-
 import { supabase } from "../lib/supabase";
 
 async function joinQueries() {
@@ -385,9 +379,6 @@ joinQueries().catch(console.error);
 `src/examples/04-transactions.ts`:
 
 ```typescript
-import dotenv from "dotenv";
-dotenv.config();
-
 import { supabase } from "../lib/supabase";
 
 async function transactions() {
@@ -455,7 +446,7 @@ export interface Database {
     Tables: {
       profiles: {
         Row: {
-          id: string;
+          user_id: string;
           username: string;
           full_name: string | null;
           avatar_url: string | null;
@@ -463,7 +454,7 @@ export interface Database {
           updated_at: string;
         };
         Insert: {
-          id: string;
+          user_id: string;
           username: string;
           full_name?: string | null;
           avatar_url?: string | null;
@@ -471,7 +462,7 @@ export interface Database {
           updated_at?: string;
         };
         Update: {
-          id?: string;
+          user_id?: string;
           username?: string;
           full_name?: string | null;
           avatar_url?: string | null;
@@ -481,7 +472,7 @@ export interface Database {
       };
       todos: {
         Row: {
-          id: string;
+          todo_id: string;
           user_id: string;
           title: string;
           description: string | null;
@@ -490,7 +481,7 @@ export interface Database {
           updated_at: string;
         };
         Insert: {
-          id?: string;
+          todo_id?: string;
           user_id: string;
           title: string;
           description?: string | null;
@@ -499,7 +490,7 @@ export interface Database {
           updated_at?: string;
         };
         Update: {
-          id?: string;
+          todo_id?: string;
           user_id?: string;
           title?: string;
           description?: string | null;
