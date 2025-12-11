@@ -83,13 +83,27 @@ ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 
 -- 정책 생성
 CREATE POLICY "Users can view own profile"
-ON profiles FOR SELECT
+ON profiles FOR SELECT TO public
 USING (auth.uid() = user_id);
 
 CREATE POLICY "Users can update own profile"
-ON profiles FOR UPDATE
+ON profiles FOR UPDATE TO authenticated
 USING (auth.uid() = user_id);
 ```
+
+|역할 이름(Role)|로그인 여부|의미|비유|
+|---|---|---|---|
+|anon|X|비회원|가게 앞을 지나가는 행인|
+|authenticated|O|회원|가게에 들어온 멤버십 회원|
+|public|상관없음|모두|행인 + 회원 모두 (사람이라면 누구나)|
+
+- USING: 기존 데이터 확인
+  SELECT, DELETE에서 사용
+- WITH CHECK: 새로운 데이터 검사
+  INSERT에서 사용
+- UPDATE는 USING과 WITH CHECK 모두 사용 가능.
+  - USING: 내가 수정할 수 있는 글인지 확인
+  - WITH CHECK: 수정한 내용이 올바른지 확인
 
 SQL 문법이 어렵다면 우측 템플릿을 활용합시다.
 
@@ -216,17 +230,17 @@ ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 
 -- 정책: 사용자는 자신의 프로필을 볼 수 있음
 CREATE POLICY "Users can view own profile"
-ON profiles FOR SELECT
+ON profiles FOR SELECT TO public
 USING (auth.uid() = user_id);
 
 -- 정책: 사용자는 자신의 프로필을 업데이트할 수 있음
 CREATE POLICY "Users can update own profile"
-ON profiles FOR UPDATE
+ON profiles FOR UPDATE TO public
 USING (auth.uid() = user_id);
 
 -- 정책: 사용자는 자신의 프로필을 삽입할 수 있음
 CREATE POLICY "Users can insert own profile"
-ON profiles FOR INSERT
+ON profiles FOR INSERT TO public
 WITH CHECK (auth.uid() = user_id);
 
 -- TODO 테이블
@@ -245,22 +259,22 @@ ALTER TABLE todos ENABLE ROW LEVEL SECURITY;
 
 -- 정책: 사용자는 자신의 TODO만 볼 수 있음
 CREATE POLICY "Users can view own todos"
-ON todos FOR SELECT
+ON todos FOR SELECT TO public
 USING (auth.uid() = user_id);
 
 -- 정책: 사용자는 자신의 TODO를 생성할 수 있음
 CREATE POLICY "Users can create own todos"
-ON todos FOR INSERT
+ON todos FOR INSERT TO public
 WITH CHECK (auth.uid() = user_id);
 
 -- 정책: 사용자는 자신의 TODO를 업데이트할 수 있음
 CREATE POLICY "Users can update own todos"
-ON todos FOR UPDATE
+ON todos FOR UPDATE TO public
 USING (auth.uid() = user_id);
 
 -- 정책: 사용자는 자신의 TODO를 삭제할 수 있음
 CREATE POLICY "Users can delete own todos"
-ON todos FOR DELETE
+ON todos FOR DELETE TO public
 USING (auth.uid() = user_id);
 
 -- updated_at 자동 업데이트 함수
