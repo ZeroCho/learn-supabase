@@ -350,20 +350,51 @@ uploadWithSignedUrl().catch(console.error);
 
 **`upload()` vs `createSignedUploadUrl()` 비교:**
 
-| 특징           | `upload()`                  | `createSignedUploadUrl()`                |
-| -------------- | --------------------------- | ---------------------------------------- |
-| 사용 위치      | 프론트엔드/백엔드 모두 가능 | 서버에서 URL 생성, 프론트엔드에서 업로드 |
-| 인증 필요      | ✅ 인증된 사용자 필요       | 서버에서 생성 시 인증 필요               |
-| RLS 정책       | ✅ 필수                     | 서버에서 생성 시만 필요                  |
-| 사용 방법      | SDK로 직접 업로드           | Signed URL로 PUT 요청                    |
-| Private bucket | RLS 정책 설정 필요          | Signed URL로 안전하게 업로드 가능        |
-| 장점           | 간단하고 직관적             | 서버 부하 감소, 더 세밀한 제어 가능      |
-| 단점           | 인증 및 RLS 정책 필요       | 서버 측 코드 필요                        |
+| 특징           | `upload()`                    | `createSignedUploadUrl()`                |
+| -------------- | ----------------------------- | ---------------------------------------- |
+| 사용 위치      | 프론트엔드/백엔드 모두 가능   | 서버에서 URL 생성, 프론트엔드에서 업로드 |
+| 인증 필요      | ✅ 인증된 사용자 필요         | 서버에서 생성 시 인증 필요               |
+| RLS 정책       | ✅ 필수 (Public/Private 모두) | 서버에서 생성 시만 필요                  |
+| 사용 방법      | SDK로 직접 업로드             | Signed URL로 PUT 요청                    |
+| Private bucket | ✅ 가능 (RLS 정책 설정 시)    | ✅ 가능                                  |
+| Public bucket  | ✅ 가능 (RLS 정책 설정 시)    | ✅ 가능                                  |
+| 장점           | 간단하고 직관적               | 서버 부하 감소, 더 세밀한 제어 가능      |
+| 단점           | 인증 및 RLS 정책 필요         | 서버 측 코드 필요                        |
 
 **언제 어떤 방식을 사용할까?**
 
-- **`upload()`**: 인증된 사용자가 직접 업로드할 때, 간단한 업로드가 필요할 때
-- **`createSignedUploadUrl()`**: Private bucket 업로드, 서버 부하를 줄이고 싶을 때, 더 세밀한 업로드 제어가 필요할 때
+- **`upload()` (프론트엔드)**: 인증된 사용자가 직접 업로드할 때, 간단한 업로드가 필요할 때
+- **`upload()` (백엔드)**: 서버에서 직접 파일을 업로드할 때. Service Role Key를 사용하면 RLS 정책을 우회할 수 있어 매우 간단합니다.
+- **`createSignedUploadUrl()`**: 프론트엔드에서 직접 업로드하고 싶을 때, 서버 부하를 줄이고 싶을 때
+
+**참고: Private bucket 업로드**
+
+`upload()`와 `createSignedUploadUrl()` 모두 Private bucket에 업로드할 수 있습니다. 둘 다 RLS 정책이 올바르게 설정되어 있으면 가능합니다. 차이점은:
+
+- **`upload()`**: 인증된 사용자의 JWT 토큰을 사용하여 RLS 정책을 통과해야 합니다
+- **`createSignedUploadUrl()`**: 서버에서 Signed URL을 생성하므로, 서버 측에서 권한을 확인한 후 URL을 발급할 수 있습니다
+
+**예제: 백엔드에서 upload() 사용**
+
+```typescript
+// 백엔드 (Node.js, Edge Function 등)
+import { createClient } from "@supabase/supabase-js";
+
+// Service Role Key 사용 (RLS 우회 가능)
+const supabase = createClient(
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY! // ⚠️ 서버에서만 사용
+);
+
+// 직접 업로드 (RLS 정책을 우회)
+const { data, error } = await supabase.storage
+  .from("avatars")
+  .upload("user-123.jpg", fileBuffer, {
+    contentType: "image/jpeg",
+  });
+
+// 매우 간단하고 직관적!
+```
 
 ## 공식 문서
 
