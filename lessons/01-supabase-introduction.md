@@ -224,9 +224,6 @@ dist
 `src/examples/01-connection-test.ts`:
 
 ```typescript
-import dotenv from "dotenv";
-dotenv.config();
-
 import { supabase } from "../lib/supabase";
 
 async function testConnection() {

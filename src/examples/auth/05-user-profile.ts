@@ -1,6 +1,3 @@
-import dotenv from "dotenv";
-dotenv.config();
-
 import { supabase } from "../../lib/supabase";
 
 async function userProfile() {
@@ -8,8 +5,8 @@ async function userProfile() {
 
   // 로그인 (예시)
   await supabase.auth.signInWithPassword({
-    email: "test@example.com",
-    password: "securePassword123!",
+    email: "zerohch.0@gmail.com",
+    password: "Zer0supabase@@",
   });
 
   // 1. 현재 사용자 정보 가져오기
@@ -25,10 +22,10 @@ async function userProfile() {
   }
 
   console.log("✅ 사용자 정보:");
-  console.log("ID:", user.id);
-  console.log("이메일:", user.email);
-  console.log("생성일:", user.created_at);
-  console.log("메타데이터:", user.user_metadata);
+  console.log("ID:", user?.id);
+  console.log("이메일:", user?.email);
+  console.log("생성일:", user?.created_at);
+  console.log("메타데이터:", user?.user_metadata);
 
   // 2. 사용자 메타데이터 업데이트
   console.log("\n2. 메타데이터 업데이트");

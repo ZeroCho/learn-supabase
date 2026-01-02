@@ -1,10 +1,42 @@
-import dotenv from "dotenv";
-dotenv.config();
-
 import { supabase } from "../lib/supabase";
 
 async function crudOperations() {
   console.log("=== CRUD 작업 예제 ===\n");
+
+  console.log("\n1. 로그인");
+  const { data: signInData, error: signInError } =
+    await supabase.auth.signInWithPassword({
+      email: "zerohch0@gmail.com",
+      password: "Zer0supabase!!",
+    });
+
+  if (signInError) {
+    console.error("로그인 오류:", signInError.message);
+  } else {
+    console.log("✅ 로그인 성공");
+    console.log("사용자 ID:", signInData.user?.id);
+    console.log("세션:", signInData.session ? "활성화됨" : "없음");
+  }
+
+  // 3. 현재 세션 확인
+  console.log("\n3. 세션 확인");
+  const {
+    data: { session },
+    error: sessionError,
+  } = await supabase.auth.getSession();
+
+  if (sessionError) {
+    console.error("세션 오류:", sessionError.message);
+  } else {
+    console.log("✅ 현재 세션:", session ? "활성화됨" : "없음");
+    if (session) {
+      console.log("사용자:", session.user.email);
+      console.log(
+        "만료 시간:",
+        new Date(session.expires_at! * 1000).toLocaleString()
+      );
+    }
+  }
 
   // 1. CREATE - 데이터 삽입
   console.log("1. CREATE 작업");
@@ -14,7 +46,7 @@ async function crudOperations() {
       title: "Supabase 학습하기",
       description: "TypeScript로 Supabase 다루기",
       completed: false,
-      user_id: "USER_ID_PLACEHOLDER" // 실제 실행 시 유효한 UUID로 교체 필요
+      user_id: session?.user.id || "",
     })
     .select()
     .single();
@@ -46,7 +78,7 @@ async function crudOperations() {
     const { data: updatedTodo, error: updateError } = await supabase
       .from("todos")
       .update({ completed: true })
-      .eq("id", insertedTodo.id)
+      .eq("todo_id", insertedTodo.todo_id)
       .select()
       .single();
 
@@ -63,7 +95,7 @@ async function crudOperations() {
     const { error: deleteError } = await supabase
       .from("todos")
       .delete()
-      .eq("id", insertedTodo.id);
+      .eq("todo_id", insertedTodo.todo_id);
 
     if (deleteError) {
       console.error("삭제 오류:", deleteError.message);

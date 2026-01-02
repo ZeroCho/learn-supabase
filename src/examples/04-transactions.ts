@@ -1,10 +1,22 @@
-import dotenv from "dotenv";
-dotenv.config();
-
 import { supabase } from "../lib/supabase";
 
 async function transactions() {
   console.log("=== 트랜잭션 예제 ===\n");
+
+  console.log("\n1. 로그인");
+  const { data: signInData, error: signInError } =
+    await supabase.auth.signInWithPassword({
+      email: "zerohch0@gmail.com",
+      password: "Zer0supabase!!",
+    });
+
+  if (signInError) {
+    console.error("로그인 오류:", signInError.message);
+  } else {
+    console.log("✅ 로그인 성공");
+    console.log("사용자 ID:", signInData.user?.id);
+    console.log("세션:", signInData.session ? "활성화됨" : "없음");
+  }
 
   // PostgreSQL RPC 함수를 사용한 트랜잭션
   // 먼저 데이터베이스에 함수를 생성해야 합니다 (lessons/02-database-sql-orm.md 참고)

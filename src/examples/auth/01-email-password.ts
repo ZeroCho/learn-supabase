@@ -1,13 +1,10 @@
-import dotenv from "dotenv";
-dotenv.config();
-
 import { supabase } from "../../lib/supabase";
 
 async function emailPasswordAuth() {
   console.log("=== Email/Password 인증 ===\n");
 
-  const email = "test@example.com";
-  const password = "securePassword123!";
+  const email = "zerohch.0@gmail.com";
+  const password = "Zer0supabase!!";
 
   // 1. 회원가입
   console.log("1. 회원가입");
@@ -15,9 +12,10 @@ async function emailPasswordAuth() {
     email,
     password,
     options: {
+      emailRedirectTo: "http://localhost:3000/auth/callback",
       data: {
-        full_name: "Test User",
-        username: "testuser",
+        full_name: "Zero Cho",
+        username: "zero",
       },
     },
   });

@@ -4,10 +4,15 @@
   "description": "Supabase 강의 예제 코드",
   "main": "dist/index.js",
   "scripts": {
-    "dev": "ts-node src/examples/01-connection-test.ts",
+    "dev": "ts-node --require dotenv/config",
     "build": "tsc",
-    "start": "node dist/index.js",
-    "test:connection": "ts-node src/examples/01-connection-test.ts"
+    "start": "node --env-file .env dist/lib/supabase.js",
+    "server": "ts-node --require dotenv/config src/server/auth-callback-server.ts",
+    "server:build": "tsc && node --env-file .env dist/server/auth-callback-server.js",
+    "gen:types": "npx supabase gen types typescript --project-id taijjwtaycfedswoyert > src/types/database.ts",
+    "gen:types:local": "npx supabase gen types typescript --local > src/types/database.ts",
+    "db:push": "npx supabase db push",
+    "db:status": "npx supabase db remote commit"
   },
   "keywords": [
     "supabase",
@@ -18,7 +23,9 @@
   "license": "ISC",
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",
-    "dotenv": "^16.3.1"
+    "@types/express": "^5.0.6",
+    "dotenv": "^16.3.1",
+    "express": "^5.2.1"
   },
   "devDependencies": {
     "@types/node": "^20.10.6",

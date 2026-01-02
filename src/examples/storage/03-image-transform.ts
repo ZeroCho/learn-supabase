@@ -1,5 +1,3 @@
-import dotenv from "dotenv";
-dotenv.config();
 import { supabase } from "../../lib/supabase";
 
 async function imageTransform() {
@@ -34,7 +32,7 @@ async function imageTransform() {
     .from(bucketName)
     .getPublicUrl(filePath, {
       transform: {
-        format: "webp",
+        // format: "origin", // origin이면 원본 유지, 아니면 webp로 변환됨
         quality: 80,
       },
     });

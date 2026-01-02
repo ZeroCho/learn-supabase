@@ -1,12 +1,9 @@
-import dotenv from "dotenv";
-dotenv.config();
-
 import { supabase } from "../../lib/supabase";
 
 async function magicLinkAuth() {
   console.log("=== Magic Link 인증 ===\n");
 
-  const email = "test@example.com";
+  const email = "zerohch.0@gmail.com";
 
   // Magic Link 전송
   console.log("1. Magic Link 전송");

@@ -1,5 +1,3 @@
-import dotenv from "dotenv";
-dotenv.config();
 import { supabase } from "../../lib/supabase";
 import * as fs from "fs";
 

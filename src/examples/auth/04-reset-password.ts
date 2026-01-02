@@ -1,12 +1,9 @@
-import dotenv from "dotenv";
-dotenv.config();
-
 import { supabase } from "../../lib/supabase";
 
 async function resetPassword() {
   console.log("=== 비밀번호 재설정 ===\n");
 
-  const email = "test@example.com";
+  const email = "zerohch.0@gmail.com";
 
   // 비밀번호 재설정 이메일 전송
   console.log("1. 비밀번호 재설정 이메일 전송");

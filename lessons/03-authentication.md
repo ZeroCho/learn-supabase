@@ -8,59 +8,140 @@
 
 ### 1. Email/Password 인증
 
-가장 기본적인 인증 방식으로, 이메일과 비밀번호를 사용합니다.
+가장 전통적이고 기본적인 인증 방식입니다. 사용자의 이메일과 비밀번호를 받아 Supabase Auth 서버에서 검증합니다.
 
-**특징:**
-
-- 이메일 중복 확인
-- 비밀번호 해싱 (자동)
-- 세션 관리
+- **보안**: 비밀번호는 데이터베이스에 평문으로 저장되지 않고, 안전한 해시 알고리즘(bcrypt 등)을 통해 암호화되어 저장됩니다.
+- **이메일 확인**: 가입 시 이메일 소유 여부를 확인하는 메일을 자동 발송하여 보안을 강화할 수 있습니다.
 
 ### 2. OAuth 공급자 연동
 
-소셜 로그인을 통해 사용자 인증을 처리합니다.
+Google, GitHub, Kakao 등 외부 서비스의 계정을 사용하여 로그인하는 방식입니다.
 
-**지원 공급자:**
+- **편의성**: 사용자가 별도의 회원가입 절차 없이 기존 계정으로 즉시 로그인할 수 있어 진입 장벽을 낮춥니다.
+- **설정**: 각 공급자(Provider)의 개발자 콘솔에서 Client ID와 Secret을 발급받아 Supabase 대시보드에 등록해야 합니다.
 
-- Google
-- GitHub
-- Apple
-- Discord
-- Facebook
-- Twitter
-- 등등...
+### 3. Magic Link 인증 (Passwordless)
 
-### 3. Magic Link 인증
+비밀번호 없이 이메일로 전송된 일회용 링크(OTP)를 클릭하여 로그인하는 방식입니다.
 
-비밀번호 없이 이메일 링크로 로그인하는 방식입니다.
+- **보안성**: 비밀번호 탈취 위험이 원천적으로 차단됩니다.
+- **UX**: 사용자가 복잡한 비밀번호를 기억할 필요가 없어 편리합니다.
 
-**장점:**
+### 4. JWT (JSON Web Token) 토큰 관리
 
-- 비밀번호 관리 불필요
-- 높은 보안성
-- UX 개선
+Supabase는 로그인 성공 시 클라이언트에게 JWT를 발급하여 세션을 관리합니다.
 
-### 4. JWT 토큰 관리
+- **Access Token**: 짧은 유효 기간을 가지며, API 요청 시 Authorization 헤더에 담겨 전송됩니다. RLS 정책 확인에 사용됩니다.
+- **Refresh Token**: 긴 유효 기간을 가지며, Access Token이 만료되었을 때 새로운 토큰을 발급받는 데 사용됩니다.
 
-Supabase는 JWT를 사용하여 세션을 관리합니다.
+### 5. 사용자 메타데이터 (User Metadata)
 
-**토큰 구성:**
+`auth.users` 테이블에는 기본적인 로그인 정보만 저장되지만, `raw_user_meta_data` 컬럼을 통해 추가 정보를 JSON 형태로 저장할 수 있습니다.
 
-- Access Token: API 요청 인증
-- Refresh Token: Access Token 갱신
-- Expiry: 토큰 만료 시간
+- **활용**: 사용자 닉네임, 프로필 이미지 URL, 환경 설정 등을 저장하는 데 유용합니다.
+- **주의**: 중요한 비즈니스 로직에 필요한 데이터는 별도의 `public.profiles` 테이블을 만들어 관리하는 것이 권장됩니다.
 
-### 5. 사용자 메타데이터 활용
+#### 5.1. `auth.users.raw_user_meta_data` vs `profiles` 테이블 비교
 
-사용자 정보를 추가로 저장하고 관리합니다.
+사용자 정보를 저장하는 두 가지 방법의 장단점을 비교합니다:
 
-**메타데이터 예시:**
+**`auth.users.raw_user_meta_data` 사용**
 
-- 이름, 아바타, 설정 등
+장점:
 
-### 6. 세션 관리
+- ✅ **간단한 설정**: 별도 테이블 생성 불필요
+- ✅ **JWT에 자동 포함**: 토큰에 자동으로 포함되어 RLS에서 즉시 사용 가능
+- ✅ **빠른 접근**: `user.user_metadata`로 즉시 접근 가능
+- ✅ **자동 동기화**: 회원가입 시 자동으로 저장됨
 
-세션 생성, 조회, 갱신, 삭제를 관리합니다.
+단점:
+
+- ❌ **제한된 크기**: JWT 크기 제한으로 과도한 데이터 저장 비권장
+- ❌ **쿼리 제약**: JSONB 필드라서 인덱싱/필터링이 제한적
+- ❌ **타입 안정성 부족**: 스키마 검증이 없어 런타임 오류 가능
+- ❌ **JOIN 불가**: 다른 테이블과 직접 JOIN 어려움
+- ❌ **인덱싱 제한**: 특정 필드만 인덱싱하기 어려움
+
+**별도 `profiles` 테이블 사용**
+
+장점:
+
+- ✅ **강력한 쿼리**: SQL 인덱싱, 필터링, 정렬이 용이
+- ✅ **타입 안정성**: 스키마로 데이터 무결성 보장
+- ✅ **JOIN 가능**: 다른 테이블과 JOIN으로 복잡한 쿼리 가능
+- ✅ **확장성**: 필드 추가/수정이 마이그레이션으로 관리 가능
+- ✅ **성능**: 필요한 컬럼만 선택 가능, 인덱스 최적화 가능
+- ✅ **RLS 세밀 제어**: 테이블별로 정책을 세밀하게 적용 가능
+
+단점:
+
+- ❌ **추가 설정 필요**: 테이블 생성, RLS 정책, 트리거 등 필요
+- ❌ **동기화 필요**: 회원가입 시 프로필 자동 생성 로직 필요
+- ❌ **추가 쿼리**: 프로필 조회를 위해 별도 쿼리 필요
+- ❌ **JWT 미포함**: RLS에서 사용하려면 별도 조회 필요
+
+**권장 사용 사례**
+
+`user_metadata` 사용 권장:
+
+- 간단한 사용자 정보 (이름, 아바타 URL 등)
+- JWT에서 즉시 필요한 정보
+- 자주 변경되지 않는 소량 데이터
+- 프로토타이핑 단계
+
+`profiles` 테이블 사용 권장:
+
+- 복잡한 프로필 데이터
+- 검색/필터링이 필요한 필드 (예: username)
+- 다른 테이블과 JOIN이 필요한 경우
+- 대용량 데이터
+- 프로덕션 환경
+
+**하이브리드 접근법**
+
+두 방식을 함께 사용할 수 있습니다:
+
+```typescript
+// 회원가입 시
+await supabase.auth.signUp({
+  email,
+  password,
+  options: {
+    data: {
+      // JWT에 포함되어 즉시 사용 가능한 간단한 정보
+      full_name: "Test User",
+      avatar_url: "https://..."
+    }
+  }
+});
+
+// 별도 profiles 테이블에는 상세 정보 저장
+await supabase.from('profiles').insert({
+  user_id: user.id,
+  username: "testuser",  // 검색 가능해야 함
+  bio: "Long bio text...",  // 긴 텍스트
+  preferences: {...}  // 복잡한 구조
+});
+```
+
+**저장 위치 확인**
+
+`options.data`로 전달한 메타데이터는 `auth.users` 테이블의 `raw_user_meta_data` 컬럼(JSONB 타입)에 저장됩니다:
+
+```sql
+-- 데이터베이스에서 직접 확인
+SELECT id, email, raw_user_meta_data
+FROM auth.users;
+```
+
+클라이언트에서는 `user.user_metadata`로 접근할 수 있습니다.
+
+### 6. 세션 관리 (Session Management)
+
+로그인 상태를 유지하고 관리하는 기능입니다.
+
+- **자동 갱신**: Supabase 클라이언트 라이브러리는 백그라운드에서 자동으로 토큰을 갱신(Refresh)하여 로그인이 끊기지 않도록 돕습니다.
+- **이벤트 감지**: `onAuthStateChange` 리스너를 통해 로그인, 로그아웃, 토큰 갱신 등의 이벤트를 실시간으로 감지하고 UI를 업데이트할 수 있습니다.
 
 ## 실습
 
@@ -69,9 +150,6 @@ Supabase는 JWT를 사용하여 세션을 관리합니다.
 `src/examples/auth/01-email-password.ts`:
 
 ```typescript
-import dotenv from "dotenv";
-dotenv.config();
-
 import { supabase } from "../../lib/supabase";
 
 async function emailPasswordAuth() {
@@ -155,9 +233,6 @@ emailPasswordAuth().catch(console.error);
 `src/examples/auth/02-oauth.ts`:
 
 ```typescript
-import dotenv from "dotenv";
-dotenv.config();
-
 import { supabase } from "../../lib/supabase";
 
 async function oauthLogin() {
@@ -209,9 +284,6 @@ oauthLogin().catch(console.error);
 `src/examples/auth/03-magic-link.ts`:
 
 ```typescript
-import dotenv from "dotenv";
-dotenv.config();
-
 import { supabase } from "../../lib/supabase";
 
 async function magicLinkAuth() {
@@ -246,9 +318,6 @@ magicLinkAuth().catch(console.error);
 `src/examples/auth/04-reset-password.ts`:
 
 ```typescript
-import dotenv from "dotenv";
-dotenv.config();
-
 import { supabase } from "../../lib/supabase";
 
 async function resetPassword() {
@@ -294,9 +363,6 @@ resetPassword().catch(console.error);
 `src/examples/auth/05-user-profile.ts`:
 
 ```typescript
-import dotenv from "dotenv";
-dotenv.config();
-
 import { supabase } from "../../lib/supabase";
 
 async function userProfile() {
@@ -369,9 +435,6 @@ userProfile().catch(console.error);
 `src/examples/auth/06-session-management.ts`:
 
 ```typescript
-import dotenv from "dotenv";
-dotenv.config();
-
 import { supabase } from "../../lib/supabase";
 
 async function sessionManagement() {

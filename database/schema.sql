@@ -79,3 +79,70 @@ CREATE TRIGGER update_todos_updated_at
 BEFORE UPDATE ON todos
 FOR EACH ROW
 EXECUTE FUNCTION update_updated_at_column();
+
+-- Tags 테이블 (다대다 관계를 위한 태그 테이블)
+CREATE TABLE tags (
+  tag_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT UNIQUE NOT NULL,
+  color TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- RLS 활성화
+ALTER TABLE tags ENABLE ROW LEVEL SECURITY;
+
+-- 정책: 모든 사용자는 태그를 볼 수 있음
+CREATE POLICY "Authenticated users can view tags"
+ON tags FOR SELECT
+TO public
+USING (true);
+
+-- 정책: 모든 인증된 사용자는 태그를 생성할 수 있음
+CREATE POLICY "Authenticated users can create tags"
+ON tags FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+-- TODO와 Tags의 다대다 관계를 위한 중간 테이블 (Junction Table)
+CREATE TABLE todo_tags (
+  todo_id UUID REFERENCES todos(id) ON DELETE CASCADE,
+  tag_id UUID REFERENCES tags(tag_id) ON DELETE CASCADE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  PRIMARY KEY (todo_id, tag_id)
+);
+
+-- RLS 활성화
+ALTER TABLE todo_tags ENABLE ROW LEVEL SECURITY;
+
+-- 정책: 사용자는 자신의 TODO에 연결된 태그를 볼 수 있음
+CREATE POLICY "Users can view own todo tags"
+ON todo_tags FOR SELECT
+USING (
+  EXISTS (
+    SELECT 1 FROM todos
+    WHERE todos.id = todo_tags.todo_id
+    AND todos.user_id = auth.uid()
+  )
+);
+
+-- 정책: 사용자는 자신의 TODO에 태그를 연결할 수 있음
+CREATE POLICY "Users can create own todo tags"
+ON todo_tags FOR INSERT
+WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM todos
+    WHERE todos.id = todo_tags.todo_id
+    AND todos.user_id = auth.uid()
+  )
+);
+
+-- 정책: 사용자는 자신의 TODO에서 태그를 제거할 수 있음
+CREATE POLICY "Users can delete own todo tags"
+ON todo_tags FOR DELETE
+USING (
+  EXISTS (
+    SELECT 1 FROM todos
+    WHERE todos.id = todo_tags.todo_id
+    AND todos.user_id = auth.uid()
+  )
+);

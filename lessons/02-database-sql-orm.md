@@ -15,25 +15,27 @@ Supabase Database를 TypeScript로 다루고, Row Level Security와 PostgreSQL �
 데이터의 중복을 줄이고, 무결성을 유지하기 위해 데이터를 여러 테이블로 나누는 과정입니다.
 
 **왜 정규화를 해야 할까요?**
+
 - **중복 제거**: 같은 데이터를 여러 곳에 저장하지 않아 용량을 아끼고 관리가 쉬워집니다.
 - **데이터 일관성**: 한 곳에서만 수정하면 되므로 데이터 불일치 문제를 방지합니다.
 
 **관계의 종류 (Relationship):**
 
 1.  **1:1 (일대일)**
-    -   사용자(User) - 프로필(Profile)
-    -   한 명의 사용자는 하나의 프로필만 가집니다.
+    - 사용자(User) - 프로필(Profile)
+    - 한 명의 사용자는 하나의 프로필만 가집니다.
 2.  **1:N (일대다)**
-    -   사용자(User) - 게시글(Post)
-    -   한 명의 사용자는 여러 개의 게시글을 쓸 수 있습니다.
+    - 사용자(User) - 게시글(Post)
+    - 한 명의 사용자는 여러 개의 게시글을 쓸 수 있습니다.
 3.  **N:M (다대다)**
-    -   학생(Student) - 수업(Class)
-    -   한 학생은 여러 수업을 듣고, 한 수업에는 여러 학생이 있습니다.
-    -   *중간 테이블(Junction Table)이 필요합니다.*
+    - 학생(Student) - 수업(Class)
+    - 한 학생은 여러 수업을 듣고, 한 수업에는 여러 학생이 있습니다.
+    - _중간 테이블(Junction Table)이 필요합니다._
 
 > **Tip**: Supabase는 관계형 데이터베이스(PostgreSQL)이므로, 테이블 간의 관계(Relationship)를 잘 설정하는 것이 핵심입니다.
 
 ### 2. 외래 키(Foreign Key)
+
 정규화를 통해 테이블을 여러 개로 쪼개놨다면, 이제 이 테이블들을 논리적으로 연결해 줄 연결 고리가 필요합니다. 그 역할을 하는 것이 바로 **외래 키(Foreign Key)**입니다.
 
 #### 외래 키란? 한 테이블의 필드(컬럼)가 다른 테이블의 **기본 키(Primary Key)**를 참조하도록 설정하는 것입니다.
@@ -91,11 +93,11 @@ ON profiles FOR UPDATE TO authenticated
 USING (auth.uid() = user_id);
 ```
 
-|역할 이름(Role)|로그인 여부|의미|비유|
-|---|---|---|---|
-|anon|X|비회원|가게 앞을 지나가는 행인|
-|authenticated|O|회원|가게에 들어온 멤버십 회원|
-|public|상관없음|모두|행인 + 회원 모두 (사람이라면 누구나)|
+| 역할 이름(Role) | 로그인 여부 | 의미   | 비유                                 |
+| --------------- | ----------- | ------ | ------------------------------------ |
+| anon            | X           | 비회원 | 가게 앞을 지나가는 행인              |
+| authenticated   | O           | 회원   | 가게에 들어온 멤버십 회원            |
+| public          | 상관없음    | 모두   | 행인 + 회원 모두 (사람이라면 누구나) |
 
 - USING: 기존 데이터 확인
   SELECT, DELETE에서 사용
@@ -126,6 +128,7 @@ Supabase에서는 PostgreSQL 함수를 API 엔드포인트로 자동 노출합�
 책의 '색인'과 같습니다. 원하는 데이터를 빠르게 찾을 수 있도록 도와주는 별도의 자료구조입니다.
 
 **언제 사용하나요?**
+
 - `WHERE` 절에 자주 사용되는 컬럼 (예: `email`, `user_id`)
 - `ORDER BY` 절에 사용되는 컬럼
 - `JOIN`의 기준이 되는 컬럼 (Foreign Key는 보통 자동으로 인덱스가 생성되지 않으므로 확인 필요)
@@ -141,6 +144,7 @@ CREATE INDEX idx_todos_user_id ON todos(user_id);
 쇼핑몰 재고가 1개 남았는데 2명이 동시에 결제하면 어떻게 될까요? 프론트엔드 상태 관리로는 해결할 수 없는 문제입니다.
 
 **ACID 원칙:**
+
 - **Atomicity (원자성)**: 모두 성공하거나, 모두 실패해야 함 (All or Nothing).
 - **Consistency (일관성)**: 트랜잭션 전후 데이터 상태가 일관되어야 함.
 - **Isolation (격리성)**: 동시에 실행되는 트랜잭션은 서로 영향을 주지 않아야 함.
@@ -152,12 +156,63 @@ Supabase에서는 `rpc` 함수를 사용하여 트랜잭션을 구현합니다 (
 
 혼자 개발할 때는 대시보드에서 클릭으로 수정해도 되지만, 팀 프로젝트에서는 **"DB 스키마도 코드(Infrastructure as Code)"**로 관리해야 합니다.
 
-**워크플로우:**
+**마이그레이션이란?**
+데이터베이스 스키마 변경 사항을 버전 관리하는 파일입니다. 코드와 마찬가지로 Git으로 관리하여 팀원들과 공유하고, 배포 시 일관된 스키마를 유지할 수 있습니다.
+
+**Supabase CLI 초기화:**
+
+```bash
+# Supabase CLI 설치 (이미 설치했다면 생략)
+npm install -g supabase
+
+# 프로젝트 초기화
+supabase init
+
+# 로컬 Supabase 시작 (Docker 필요)
+supabase start
+```
+
+**마이그레이션 워크플로우:**
+
 1.  **로컬 DB 실행**: `supabase start`
-2.  **변경 사항 적용**: 로컬 대시보드에서 테이블 수정
-3.  **마이그레이션 파일 생성**: `supabase db diff -f create_profiles`
-4.  **Git 커밋**: 생성된 마이그레이션 파일을 팀원과 공유
-5.  **배포**: `supabase db push`로 운영 서버에 적용
+2.  **변경 사항 적용**: 로컬 대시보드에서 테이블 수정 또는 SQL 직접 실행
+3.  **마이그레이션 파일 생성**: `supabase db diff -f migration_name`
+4.  **마이그레이션 파일 확인**: `supabase/migrations/` 폴더에 생성된 파일 검토
+5.  **Git 커밋**: 생성된 마이그레이션 파일을 팀원과 공유
+6.  **배포**: `supabase db push`로 운영 서버에 적용
+
+**마이그레이션 파일 구조:**
+
+마이그레이션 파일은 타임스탬프와 이름으로 구성됩니다:
+
+```
+supabase/migrations/
+  ├── 20240101000000_initial_schema.sql
+  ├── 20240102000000_add_tags_table.sql
+  └── 20240103000000_add_indexes.sql
+```
+
+**주요 명령어:**
+
+```bash
+# 로컬 DB와 원격 DB의 차이점 확인
+supabase db diff
+
+# 마이그레이션 파일 생성
+supabase db diff -f add_tags_table
+
+# 로컬에 마이그레이션 적용
+supabase migration up
+
+# 원격 DB에 마이그레이션 적용
+supabase db push
+
+# 마이그레이션 되돌리기 (로컬)
+supabase migration down
+
+# 원격 DB 상태 확인
+supabase db remote commit
+```
 
 ### 8. TypeScript 타입 생성 자동화
 
@@ -182,13 +237,32 @@ supabase gen types typescript --project-id your-project-id > src/types/database.
 ```
 
 ### 9. Supabase CLI 사용
+
 **프로젝트 링크:**
 
 ```bash
 supabase link --project-ref your-project-ref
 ```
 
-**마이그레이션:**
+**서버와 싱크 맞추기(도커 필요):**
+
+```bash
+supabase db pull
+```
+
+**다른 부분 찾기(도커 필요):**
+
+```bash
+supabase db diff
+```
+
+**마이그레이션 파일 생성:**
+
+```bash
+supabase migration new 이름
+```
+
+**마이그레이션 진행:**
 
 ```bash
 supabase db push
@@ -296,6 +370,71 @@ CREATE TRIGGER update_todos_updated_at
 BEFORE UPDATE ON todos
 FOR EACH ROW
 EXECUTE FUNCTION update_updated_at_column();
+
+-- Tags 테이블 (다대다 관계를 위한 태그 테이블)
+CREATE TABLE tags (
+  tag_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT UNIQUE NOT NULL,
+  color TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- RLS 활성화
+ALTER TABLE tags ENABLE ROW LEVEL SECURITY;
+
+-- 정책: 모든 사용자는 태그를 볼 수 있음
+CREATE POLICY "Authenticated users can view tags"
+ON tags FOR SELECT TO public
+USING (true);
+
+-- 정책: 모든 인증된 사용자는 태그를 생성할 수 있음
+CREATE POLICY "Authenticated users can create tags"
+ON tags FOR INSERT TO authenticated
+WITH CHECK (true);
+
+-- TODO와 Tags의 다대다 관계를 위한 중간 테이블 (Junction Table)
+CREATE TABLE todo_tags (
+  todo_id UUID REFERENCES todos(todo_id) ON DELETE CASCADE,
+  tag_id UUID REFERENCES tags(tag_id) ON DELETE CASCADE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  PRIMARY KEY (todo_id, tag_id)
+);
+
+-- RLS 활성화
+ALTER TABLE todo_tags ENABLE ROW LEVEL SECURITY;
+
+-- 정책: 사용자는 자신의 TODO에 연결된 태그를 볼 수 있음
+CREATE POLICY "Users can view own todo tags"
+ON todo_tags FOR SELECT TO public
+USING (
+  EXISTS (
+    SELECT 1 FROM todos
+    WHERE todos.todo_id = todo_tags.todo_id
+    AND todos.user_id = auth.uid()
+  )
+);
+
+-- 정책: 사용자는 자신의 TODO에 태그를 연결할 수 있음
+CREATE POLICY "Users can create own todo tags"
+ON todo_tags FOR INSERT TO public
+WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM todos
+    WHERE todos.todo_id = todo_tags.todo_id
+    AND todos.user_id = auth.uid()
+  )
+);
+
+-- 정책: 사용자는 자신의 TODO에서 태그를 제거할 수 있음
+CREATE POLICY "Users can delete own todo tags"
+ON todo_tags FOR DELETE TO public
+USING (
+  EXISTS (
+    SELECT 1 FROM todos
+    WHERE todos.todo_id = todo_tags.todo_id
+    AND todos.user_id = auth.uid()
+  )
+);
 ```
 
 ### 실습 2: CRUD 작업
@@ -347,7 +486,7 @@ async function crudOperations() {
     const { data: updatedTodo, error: updateError } = await supabase
       .from("todos")
       .update({ completed: true })
-      .eq("id", insertedTodo.id)
+      .eq("todo_id", insertedTodo.todo_id)
       .select()
       .single();
 
@@ -364,7 +503,7 @@ async function crudOperations() {
     const { error: deleteError } = await supabase
       .from("todos")
       .delete()
-      .eq("id", insertedTodo.id);
+      .eq("todo_id", insertedTodo.todo_id);
 
     if (deleteError) {
       console.error("삭제 오류:", deleteError.message);
@@ -393,13 +532,14 @@ async function joinQueries() {
     .select(
       `
       *,
-      profiles!todos_user_id_fkey (
-        username,
-        full_name
+      owner: profiles (
+        full_name: fullName,
+        avatar_url: avatarUrl,
+        created_at: createdAt
       )
     `
     )
-    .order("created_at", { ascending: false })
+    .order("createdAt", { ascending: false })
     .limit(10);
 
   if (error) {
@@ -411,9 +551,9 @@ async function joinQueries() {
   data?.forEach((todo: any) => {
     console.log(`
       - 제목: ${todo.title}
-      - 작성자: ${todo.profiles?.full_name || todo.profiles?.username}
+      - 작성자: ${todo.owner?.fullName}
       - 완료 여부: ${todo.completed ? "✅" : "⏳"}
-      - 생성일: ${new Date(todo.created_at).toLocaleString()}
+      - 생성일: ${new Date(todo.createdAt).toLocaleString()}
     `);
   });
 }
@@ -435,6 +575,10 @@ async function transactions() {
   // 먼저 데이터베이스에 함수를 생성해야 합니다:
 
   /*
+  -- 먼저 데이터베이스에 다음 함수를 생성해야 합니다:
+  --
+  -- 모두 성공하면 COMMIT되고, 하나라도 실패하면 ROLLBACK 됨
+  
   CREATE OR REPLACE FUNCTION create_todo_with_tag(
     todo_title TEXT,
     todo_description TEXT,
@@ -443,14 +587,30 @@ async function transactions() {
   RETURNS UUID AS $$
   DECLARE
     new_todo_id UUID;
+    existing_tag_id UUID;
   BEGIN
     -- TODO 생성
-    INSERT INTO todos (title, description)
-    VALUES (todo_title, todo_description)
-    RETURNING id INTO new_todo_id;
+    INSERT INTO todos (title, description, user_id)
+    VALUES (todo_title, todo_description, auth.uid())
+    RETURNING todo_id INTO new_todo_id;
     
-    -- 태그 생성 (예시)
-    -- INSERT INTO tags (name) VALUES (tag_name);
+    -- 태그가 이미 존재하는지 확인
+    SELECT tag_id INTO existing_tag_id
+    FROM tags
+    WHERE name = tag_name
+    LIMIT 1;
+    
+    -- 태그가 없으면 생성
+    IF existing_tag_id IS NULL THEN
+      INSERT INTO tags (name)
+      VALUES (tag_name)
+      RETURNING tag_id INTO existing_tag_id;
+    END IF;
+    
+    -- TODO와 태그 연결
+    INSERT INTO todo_tags (todo_id, tag_id)
+    VALUES (new_todo_id, existing_tag_id)
+    ON CONFLICT (todo_id, tag_id) DO NOTHING;
     
     RETURN new_todo_id;
   END;
@@ -567,6 +727,116 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 
 이제 자동완성과 타입 체크가 작동합니다!
 
+### 실습 6: Supabase 마이그레이션으로 테이블 생성
+
+이제 대시보드에서 직접 SQL을 실행하는 대신, **마이그레이션 파일**을 사용하여 코드로 스키마를 관리하는 방법을 학습합니다.
+
+**1단계: 마이그레이션 파일 생성**
+
+`supabase/migrations/` 폴더에 새로운 마이그레이션 파일을 생성합니다:
+
+```bash
+# 마이그레이션 파일 생성 (자동으로 타임스탬프가 추가됨)
+supabase migration new create_tags_table
+```
+
+또는 직접 파일을 생성할 수도 있습니다:
+`supabase/migrations/20240101000000_create_tags_table.sql`
+
+**2단계: 마이그레이션 파일 작성**
+
+생성된 마이그레이션 파일에 다음 SQL을 작성합니다:
+
+```sql
+-- Tags 테이블 생성
+CREATE TABLE tags (
+  tag_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT UNIQUE NOT NULL,
+  color TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- RLS 활성화
+ALTER TABLE tags ENABLE ROW LEVEL SECURITY;
+
+-- 정책: 모든 사용자는 태그를 볼 수 있음
+CREATE POLICY "Authenticated users can view tags"
+ON tags FOR SELECT TO public
+USING (true);
+
+-- 정책: 모든 인증된 사용자는 태그를 생성할 수 있음
+CREATE POLICY "Authenticated users can create tags"
+ON tags FOR INSERT TO authenticated
+WITH CHECK (true);
+
+-- TODO와 Tags의 다대다 관계를 위한 중간 테이블
+CREATE TABLE todo_tags (
+  todo_id UUID REFERENCES todos(todo_id) ON DELETE CASCADE,
+  tag_id UUID REFERENCES tags(tag_id) ON DELETE CASCADE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  PRIMARY KEY (todo_id, tag_id)
+);
+
+-- RLS 활성화
+ALTER TABLE todo_tags ENABLE ROW LEVEL SECURITY;
+
+-- 정책: 사용자는 자신의 TODO에 연결된 태그를 볼 수 있음
+CREATE POLICY "Users can view own todo tags"
+ON todo_tags FOR SELECT TO public
+USING (
+  EXISTS (
+    SELECT 1 FROM todos
+    WHERE todos.todo_id = todo_tags.todo_id
+    AND todos.user_id = auth.uid()
+  )
+);
+
+-- 정책: 사용자는 자신의 TODO에 태그를 연결할 수 있음
+CREATE POLICY "Users can create own todo tags"
+ON todo_tags FOR INSERT TO public
+WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM todos
+    WHERE todos.todo_id = todo_tags.todo_id
+    AND todos.user_id = auth.uid()
+  )
+);
+
+-- 정책: 사용자는 자신의 TODO에서 태그를 제거할 수 있음
+CREATE POLICY "Users can delete own todo tags"
+ON todo_tags FOR DELETE TO public
+USING (
+  EXISTS (
+    SELECT 1 FROM todos
+    WHERE todos.todo_id = todo_tags.todo_id
+    AND todos.user_id = auth.uid()
+  )
+);
+```
+
+**3단계: 원격 DB에 마이그레이션 적용**
+
+```bash
+# Supabase 프로젝트와 연결
+supabase link --project-ref your-project-ref
+
+# 원격 데이터베이스에 마이그레이션 적용
+supabase db push
+```
+
+**4단계: 변경 사항 확인**
+
+브라우저에서 표시된 URL로 접속하여 대시보드에서 `tags`와 `todo_tags` 테이블이 생성되었는지 확인합니다.
+
+**마이그레이션의 장점:**
+
+- ✅ **버전 관리**: Git으로 스키마 변경 이력을 추적
+- ✅ **협업**: 팀원들이 동일한 스키마를 공유
+- ✅ **롤백**: 문제 발생 시 이전 마이그레이션으로 되돌리기 가능
+- ✅ **자동화**: CI/CD 파이프라인에서 자동 배포 가능
+
+**💡 Tip**: 대시보드에서 직접 수정한 후 `supabase db diff` 명령어로 변경 사항을 마이그레이션 파일로 추출할 수 있습니다.
+
 ## 공식 문서
 
 - [Database 가이드](https://supabase.com/docs/guides/database)
@@ -574,6 +844,8 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 - [PostgreSQL 함수](https://supabase.com/docs/guides/database/functions)
 - [Query Builder](https://supabase.com/docs/reference/javascript/select)
 - [TypeScript](https://supabase.com/docs/reference/javascript/typescript-support)
+- [로컬 개발 환경](https://supabase.com/docs/guides/cli/local-development)
+- [데이터베이스 마이그레이션](https://supabase.com/docs/guides/cli/managing-environments)
 
 ## 다음 섹션 미리보기
 
@@ -587,6 +859,8 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 ## 실습 과제
 
 1. profiles와 todos 테이블을 생성하고 RLS 정책을 설정하세요
-2. CRUD 작업을 수행하는 코드를 작성하세요
-3. JOIN 쿼리를 사용하여 관련 데이터를 함께 가져오세요
-4. TypeScript 타입을 생성하고 타입 안전성을 확보하세요
+2. tags 테이블과 todo_tags 중간 테이블을 생성하여 다대다 관계를 구현하세요
+3. CRUD 작업을 수행하는 코드를 작성하세요
+4. JOIN 쿼리를 사용하여 관련 데이터를 함께 가져오세요
+5. TypeScript 타입을 생성하고 타입 안전성을 확보하세요
+6. Supabase 마이그레이션을 사용하여 tags 테이블을 생성하는 마이그레이션 파일을 작성하세요
