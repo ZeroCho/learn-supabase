@@ -1,26 +1,39 @@
 # 섹션 6: Realtime - 실시간 통신
 
 ## 목표
+
 실시간 데이터 동기화를 구현합니다.
 
 ## 학습 내용
+
 ### 1. Realtime 구독/구독 해제
+
 Supabase는 WebSocket을 통해 데이터베이스의 변경 사항을 실시간으로 클라이언트에 푸시합니다.
+
 - **구독(Subscribe)**: `supabase.channel().subscribe()`를 통해 연결을 시작합니다.
 - **해제(Unsubscribe)**: `supabase.removeChannel()`로 연결을 끊어 리소스를 절약해야 합니다 (예: 페이지 이동 시).
 
 ### 2. 채널 및 필터 활용
+
 모든 데이터를 다 받는 것은 비효율적입니다. 필요한 데이터만 골라 받을 수 있습니다.
+
 - **Event 필터**: `INSERT`, `UPDATE`, `DELETE` 중 원하는 이벤트만 선택합니다.
 - **Row 필터**: `filter: 'user_id=eq.123'` 처럼 특정 조건에 맞는 행의 변경사항만 수신할 수 있습니다.
+  - PostgREST 필터 문법을 사용합니다: `컬럼명=연산자.값`
+  - 주요 연산자: `eq` (같음), `neq` (다름), `gt` (초과), `gte` (이상), `lt` (미만), `lte` (이하), `in` (포함), `is` (NULL 체크)
+  - 예시: `filter: 'user_id=eq.123'`, `filter: 'status=eq.completed'`, `filter: 'user_id=eq.${currentUserId}'`
 
 ### 3. Broadcast (브로드캐스트)
+
 데이터베이스를 거치지 않고 클라이언트끼리 직접 메시지를 주고받는 기능입니다.
+
 - **용도**: 마우스 커서 위치 공유, '타이핑 중...' 표시 등 DB에 저장할 필요가 없는 휘발성 데이터 전송에 최적화되어 있습니다.
 - **속도**: DB 쓰기 과정이 없으므로 매우 빠릅니다 (Low Latency).
 
 ### 4. Presence (프레즌스)
+
 현재 채널에 접속해 있는 사용자들의 상태(State)를 공유하고 동기화하는 기능입니다.
+
 - **용도**: '현재 접속 중인 사용자 목록', '온라인/오프라인 상태 표시' 구현에 사용됩니다.
 - **동기화**: 사용자가 들어오거나(join) 나갈 때(leave) 자동으로 상태를 업데이트해 줍니다.
 
@@ -39,67 +52,108 @@ Realtime 기능은 기본적으로 활성화되어 있을 수 있지만, 특정 
 
 ```typescript
 // src/06-realtime/index.ts
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from "@supabase/supabase-js";
 
-const supabase = createClient('YOUR_SUPABASE_URL', 'YOUR_SUPABASE_ANON_KEY')
+const supabase = createClient("YOUR_SUPABASE_URL", "YOUR_SUPABASE_ANON_KEY");
 
 // 1. Postgres Changes (DB 변경사항 구독)
+// 기본 구독 (모든 변경사항 수신)
 const dbChannel = supabase
-  .channel('db-changes')
-  .on('postgres_changes', {
-    event: '*', // INSERT, UPDATE, DELETE, or *
-    schema: 'public',
-    table: 'todos'
-  }, (payload) => {
-    console.log('DB 변경됨:', payload)
-  })
-  .subscribe()
+  .channel("db-changes")
+  .on(
+    "postgres_changes",
+    {
+      event: "*", // INSERT, UPDATE, DELETE, or *
+      schema: "public",
+      table: "todos",
+    },
+    (payload) => {
+      console.log("DB 변경됨:", payload);
+    }
+  )
+  .subscribe();
+
+// Row Filter를 사용한 구독 (특정 조건의 행만 수신)
+const filteredChannel = supabase
+  .channel("filtered-changes")
+  .on(
+    "postgres_changes",
+    {
+      event: "*",
+      schema: "public",
+      table: "todos",
+      filter: "user_id=eq.123", // user_id가 123인 행의 변경사항만 수신
+    },
+    (payload) => {
+      console.log("필터링된 변경사항:", payload);
+    }
+  )
+  .subscribe();
+
+// 동적 값 사용 예시
+const currentUserId = "user_456";
+const userChannel = supabase
+  .channel("user-todos")
+  .on(
+    "postgres_changes",
+    {
+      event: "INSERT",
+      schema: "public",
+      table: "todos",
+      filter: `user_id=eq.${currentUserId}`, // 현재 사용자의 할 일만 수신
+    },
+    (payload) => {
+      console.log("내 할 일 추가됨:", payload);
+    }
+  )
+  .subscribe();
 
 // 2. Broadcast (클라이언트 간 메시지 전송)
 // 예: 마우스 커서 위치, 타이핑 중 표시 등 DB에 저장할 필요 없는 휘발성 데이터
-const roomChannel = supabase.channel('room_1')
+const roomChannel = supabase.channel("room_1");
 
 roomChannel
-  .on('broadcast', { event: 'cursor-pos' }, (payload) => {
-    console.log('다른 유저 커서:', payload.payload)
+  .on("broadcast", { event: "cursor-pos" }, (payload) => {
+    console.log("다른 유저 커서:", payload.payload);
   })
   .subscribe((status) => {
-    if (status === 'SUBSCRIBED') {
+    if (status === "SUBSCRIBED") {
       // 메시지 전송 예시
       roomChannel.send({
-        type: 'broadcast',
-        event: 'cursor-pos',
+        type: "broadcast",
+        event: "cursor-pos",
         payload: { x: 100, y: 200 },
-      })
+      });
     }
-  })
+  });
 
 // 3. Presence (사용자 접속 상태 공유)
 // 예: "현재 접속 중인 사용자 목록"
-const presenceChannel = supabase.channel('online-users')
+const presenceChannel = supabase.channel("online-users");
 
 presenceChannel
-  .on('presence', { event: 'sync' }, () => {
-    const state = presenceChannel.presenceState()
-    console.log('현재 접속자 목록:', state)
+  .on("presence", { event: "sync" }, () => {
+    const state = presenceChannel.presenceState();
+    console.log("현재 접속자 목록:", state);
   })
-  .on('presence', { event: 'join' }, ({ key, newPresences }) => {
-    console.log('입장:', newPresences)
+  .on("presence", { event: "join" }, ({ key, newPresences }) => {
+    console.log("입장:", newPresences);
   })
-  .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
-    console.log('퇴장:', leftPresences)
+  .on("presence", { event: "leave" }, ({ key, leftPresences }) => {
+    console.log("퇴장:", leftPresences);
   })
   .subscribe(async (status) => {
-    if (status === 'SUBSCRIBED') {
+    if (status === "SUBSCRIBED") {
       // 내 상태 전송
       await presenceChannel.track({
-        user_id: 'user_123',
+        user_id: "user_123",
         online_at: new Date().toISOString(),
-      })
+      });
     }
-  })
+  });
 ```
 
 ## 공식 문서
+
 - [Realtime 가이드](https://supabase.com/docs/guides/realtime)
 - [Realtime API](https://supabase.com/docs/reference/javascript/realtime-api)

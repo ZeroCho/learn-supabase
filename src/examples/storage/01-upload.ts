@@ -7,7 +7,7 @@ async function uploadFile() {
 
   const bucketName = "avatars";
   // 테스트용 이미지 파일이 필요합니다.
-  const filePath = "./test-image.jpg";
+  const filePath = path.join(__dirname, "test-image.png");
 
   if (!fs.existsSync(filePath)) {
     console.error("테스트용 이미지 파일이 없습니다:", filePath);
@@ -17,13 +17,13 @@ async function uploadFile() {
 
   // 파일 읽기
   const file = fs.readFileSync(filePath);
-  const fileName = `user-${Date.now()}.jpg`;
+  const fileName = `public/user-${Date.now()}.png`;
 
   // 업로드
   const { data, error } = await supabase.storage
     .from(bucketName)
     .upload(fileName, file, {
-      contentType: "image/jpeg",
+      contentType: "image/png",
       upsert: false,
     });
 

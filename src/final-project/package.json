@@ -7,7 +7,10 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "gen:types": "npx supabase gen types typescript --project-id taijjwtaycfedswoyert > src/types/database.ts",
+    "deploy:function": "cd ../.. && supabase functions deploy generate-todo-description",
+    "deploy:function:local": "cd ../.. && supabase functions serve generate-todo-description --no-verify-jwt"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.84.0",

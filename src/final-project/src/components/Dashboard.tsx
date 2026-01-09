@@ -1,4 +1,4 @@
-import { PieChart, List, CheckCircle2, Circle } from 'lucide-react'
+import { PieChart, List, CheckCircle2, Circle, Clock } from 'lucide-react'
 import type { Database } from '../types/database'
 import './Dashboard.css'
 
@@ -10,9 +10,10 @@ interface DashboardProps {
 
 export default function Dashboard({ todos }: DashboardProps) {
   const total = todos.length
-  const completed = todos.filter(t => t.completed).length
-  const pending = total - completed
-  const progress = total === 0 ? 0 : Math.round((completed / total) * 100)
+  const todo = todos.filter(t => (t.status || 'todo') === 'todo').length
+  const inProgress = todos.filter(t => t.status === 'in_progress').length
+  const done = todos.filter(t => (t.status || 'todo') === 'done' || t.completed).length
+  const progress = total === 0 ? 0 : Math.round((done / total) * 100)
 
   return (
     <div className="dashboard-grid">
@@ -21,7 +22,7 @@ export default function Dashboard({ todos }: DashboardProps) {
           <List className="stat-icon" />
         </div>
         <div className="stat-content">
-          <p className="stat-label">Total Tasks</p>
+          <p className="stat-label">전체 작업</p>
           <p className="stat-value">{total}</p>
         </div>
       </div>
@@ -31,8 +32,8 @@ export default function Dashboard({ todos }: DashboardProps) {
           <CheckCircle2 className="stat-icon" />
         </div>
         <div className="stat-content">
-          <p className="stat-label">Completed</p>
-          <p className="stat-value">{completed}</p>
+          <p className="stat-label">완료</p>
+          <p className="stat-value">{done}</p>
         </div>
       </div>
 
@@ -41,8 +42,18 @@ export default function Dashboard({ todos }: DashboardProps) {
           <Circle className="stat-icon" />
         </div>
         <div className="stat-content">
-          <p className="stat-label">Pending</p>
-          <p className="stat-value">{pending}</p>
+          <p className="stat-label">진행 중</p>
+          <p className="stat-value">{inProgress}</p>
+        </div>
+      </div>
+      
+      <div className="stat-card">
+        <div className="stat-icon-wrapper blue">
+          <Clock className="stat-icon" />
+        </div>
+        <div className="stat-content">
+          <p className="stat-label">할 일</p>
+          <p className="stat-value">{todo}</p>
         </div>
       </div>
 
@@ -51,7 +62,7 @@ export default function Dashboard({ todos }: DashboardProps) {
           <PieChart className="stat-icon" />
         </div>
         <div className="stat-content">
-          <p className="stat-label">Progress</p>
+          <p className="stat-label">진행률</p>
           <p className="stat-value">{progress}%</p>
         </div>
       </div>

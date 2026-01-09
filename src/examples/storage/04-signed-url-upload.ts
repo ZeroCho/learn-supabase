@@ -1,6 +1,6 @@
 import { supabase } from "../../lib/supabase";
 import * as fs from "fs";
-
+import * as path from "path";
 /**
  * Signed URL을 사용한 파일 업로드 예제
  *
@@ -17,10 +17,10 @@ async function uploadWithSignedUrl() {
   console.log("=== Signed URL을 사용한 파일 업로드 ===\n");
 
   const bucketName = "avatars";
-  const fileName = `user-${Date.now()}.jpg`;
+  const fileName = `public/user-${Date.now()}.jpg`;
 
   // 테스트용 이미지 파일
-  const filePath = "./test-image.jpg";
+  const filePath = path.join(__dirname, "test-image.png");
   if (!fs.existsSync(filePath)) {
     console.error("테스트용 이미지 파일이 없습니다:", filePath);
     console.log("임시 파일을 생성합니다...");
@@ -52,7 +52,7 @@ async function uploadWithSignedUrl() {
   const uploadResponse = await fetch(signedUrlData.signedUrl, {
     method: "PUT",
     headers: {
-      "Content-Type": "image/jpeg",
+      "Content-Type": "image/png",
       Authorization: `Bearer ${signedUrlData.token}`,
     },
     body: fileBlob,
@@ -147,21 +147,5 @@ async function uploadWithSignedUrl() {
  * });
  * ```
  */
-async function demonstrateFrontendFlow() {
-  console.log("\n=== 프론트엔드 업로드 방법 비교 ===\n");
-  console.log("1. upload() 메서드 (간단한 방법):");
-  console.log("   - 인증된 사용자만 사용 가능");
-  console.log("   - Supabase SDK로 직접 업로드");
-  console.log("   - RLS 정책을 통과해야 함");
-  console.log("   - Public bucket 또는 적절한 RLS 설정 필요");
-  console.log("\n2. Signed URL 방식:");
-  console.log("   - 서버/Edge Function API에서 Signed URL 생성");
-  console.log("   - 생성된 Signed URL과 token을 받아옴");
-  console.log("   - fetch()로 PUT 요청하여 파일 업로드");
-  console.log("   - Private bucket 업로드에 유용");
-  console.log("   - 서버 부하 감소");
-}
 
-uploadWithSignedUrl()
-  .then(() => demonstrateFrontendFlow())
-  .catch(console.error);
+uploadWithSignedUrl().catch(console.error);
