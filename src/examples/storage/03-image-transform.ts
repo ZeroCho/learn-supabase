@@ -5,14 +5,20 @@ async function imageTransform() {
 
   const bucketName = "avatars";
   // 변환할 이미지 파일 경로 (업로드 예제에서 생성된 파일명으로 교체 필요)
-  const filePath = "user-1234567890.jpg";
+  const filePath = "public/user-1767602513170.png";
 
   // 원본 URL
-  const { data: originalUrl } = supabase.storage
+  const { data: signedUrlData } = await supabase.storage
     .from(bucketName)
-    .getPublicUrl(filePath);
+    .createSignedUrl(filePath, 3600, {
+      transform: {
+        width: 300,
+        height: 300,
+        resize: "cover",
+      },
+    });
 
-  console.log("원본:", originalUrl.publicUrl);
+  console.log("원본:", signedUrlData?.signedUrl);
 
   // 리사이즈된 URL (300x300)
   const { data: resizedUrl } = supabase.storage
