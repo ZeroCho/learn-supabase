@@ -71,5 +71,22 @@ SELECT * FROM cron.job_run_details ORDER BY start_time DESC LIMIT 10;
 - **`cron.job`**: 현재 예약된 모든 작업의 리스트를 보여줍니다.
 - **`cron.job_run_details`**: 작업의 실행 이력(성공/실패 여부, 실행 시간 등)을 확인할 수 있어 디버깅에 유용합니다.
 
+### pg_net
+```sql
+select
+  cron.schedule(
+    'nightly-backup-job', -- 작업 이름 (고유해야 함)
+    '0 0 * * *',          -- Cron 표현식 (매일 0시 0분)
+    $$
+    select
+      net.http_post(
+          url:='https://your-backend-api.com/api/daily-task', -- 실행할 백엔드 주소
+          headers:='{"Content-Type": "application/json", "Authorization": "Bearer YOUR_API_KEY"}',
+          body:='{"task": "cleanup"}'
+      ) as request_id;
+    $$
+  );
+```
+
 ## 공식 문서
 - [Cron 가이드](https://supabase.com/docs/guides/database/extensions/pg_cron)
