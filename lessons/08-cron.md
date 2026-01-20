@@ -90,3 +90,4 @@ select
 
 ## 공식 문서
 - [Cron 가이드](https://supabase.com/docs/guides/database/extensions/pg_cron)
+- [pg_net 가이드](https://supabase.com/docs/guides/database/extensions/pg_net)
