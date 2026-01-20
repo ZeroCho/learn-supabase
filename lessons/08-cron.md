@@ -1,23 +1,30 @@
 # 섹션 8: Cron - 스케줄링
 
 ## 목표
+
 정기적 작업을 자동화합니다.
 
 ## 학습 내용
+
 ### 1. pg_cron 확장 이해
+
 PostgreSQL 내에서 직접 크론 작업(스케줄링 작업)을 실행할 수 있게 해주는 확장 기능입니다. 별도의 백엔드 서버 없이 데이터베이스 레벨에서 주기적인 작업을 처리할 수 있어 효율적입니다.
 
 ### 2. 크론 표현식 작성
+
 표준 크론 문법을 따릅니다:
+
 - `* * * * *` (분 시 일 월 요일)
 - 예: `0 0 * * *` (매일 자정), `*/5 * * * *` (5분마다)
 
 ### 3. 스케줄 관리
+
 - **스케줄 등록**: `cron.schedule` 함수를 사용하여 작업을 등록합니다.
 - **스케줄 취소**: `cron.unschedule` 함수를 사용하여 등록된 작업을 제거할 수 있습니다.
 - **작업 목록 확인**: `cron.job` 테이블을 조회하여 현재 등록된 모든 스케줄을 확인할 수 있습니다.
 
 ### 4. 로그 및 모니터링
+
 - 작업 실행 결과와 상태는 `cron.job_run_details` 테이블에 기록됩니다.
 - 작업이 실패했는지, 성공했는지, 실행 시간은 얼마나 걸렸는지 등을 모니터링할 수 있습니다.
 
@@ -66,12 +73,14 @@ SELECT * FROM cron.job_run_details ORDER BY start_time DESC LIMIT 10;
 ```
 
 ### 코드 설명
+
 - **`cron.schedule`**: 새로운 크론 작업을 등록합니다. 첫 번째 인자는 작업의 고유 이름, 두 번째는 크론 표현식, 세 번째는 실행할 SQL 명령어입니다.
 - **`cron.unschedule`**: 등록된 작업을 이름으로 찾아 삭제합니다.
 - **`cron.job`**: 현재 예약된 모든 작업의 리스트를 보여줍니다.
 - **`cron.job_run_details`**: 작업의 실행 이력(성공/실패 여부, 실행 시간 등)을 확인할 수 있어 디버깅에 유용합니다.
 
 ### pg_net
+
 ```sql
 select
   cron.schedule(
@@ -88,6 +97,38 @@ select
   );
 ```
 
+### 1. pg_net 확장 이해
+
+PostgreSQL에서 비동기 HTTP 요청을 보낼 수 있게 해주는 확장 기능입니다. 이를 통해 데이터베이스 이벤트(예: 트리거, Cron)에 반응하여 외부 API를 호출할 수 있습니다.
+
+### 2. 작업 추가 및 처리
+
+- `net.http_get`, `net.http_post` 등의 함수를 사용하여 HTTP 요청 작업을 수행합니다.
+
+```sql
+-- 1. pg_net 확장 활성화
+CREATE EXTENSION IF NOT EXISTS pg_net;
+
+-- 2. HTTP GET 요청 (비동기)
+-- 외부 API를 호출하고 결과를 기다리지 않고 바로 리턴합니다.
+SELECT net.http_get(
+    'https://jsonplaceholder.typicode.com/todos/1'
+);
+
+-- 3. HTTP POST 요청 (JSON 데이터 전송)
+-- headers와 body를 포함하여 POST 요청을 보냅니다.
+SELECT net.http_post(
+    url := 'https://jsonplaceholder.typicode.com/posts',
+    body := '{"title": "foo", "body": "bar", "userId": 1}'::jsonb,
+    headers := '{"Content-Type": "application/json"}'::jsonb
+);
+
+-- 4. 요청 상태 확인
+-- 최근 요청들의 상태(성공/실패 여부, 응답 코드 등)를 확인합니다.
+SELECT * FROM net.http_request_queue ORDER BY created DESC LIMIT 5;
+```
+
 ## 공식 문서
+
 - [Cron 가이드](https://supabase.com/docs/guides/database/extensions/pg_cron)
 - [pg_net 가이드](https://supabase.com/docs/guides/database/extensions/pg_net)
